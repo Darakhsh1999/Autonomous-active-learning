@@ -20,6 +20,7 @@ class ActiveLearningDataset(Dataset):
     
     def update_labels(self, new_indices: np.ndarray, new_labels: torch.Tensor):
         """ Updates the dataset with the new labels """
+        print(f"Added {len(new_indices)} new labels to the data set")
         self.indices += new_indices
         self.targets[new_indices] = new_labels
     
