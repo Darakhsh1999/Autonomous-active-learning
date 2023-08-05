@@ -5,7 +5,7 @@ class Params():
 
     # Data set parameters
     data_size = 10000
-    initial_size = 500
+    initial_size = 1000
 
     # Training parameters
     n_epochs = 40
@@ -24,5 +24,5 @@ class Params():
     # Active learning parameters
     n_iterations = 20
     n_new_labels = 100
-    confidence_based = False # If True, we add prediction's label if probability score is above confidence_threshold
-    confidence_threshold = 0.9
+    confidence_based = True # If True, we add prediction's label if probability score is above confidence_threshold
+    confidence_threshold = 0.99999

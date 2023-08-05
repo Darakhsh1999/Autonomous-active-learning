@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-from tqdm import tqdm
 from torch.utils.data import DataLoader
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 
@@ -10,7 +9,7 @@ from params import Params
 def train(model: CNN, p: Params, optimizer, loss_fn, train_loader, val_loader):
 
     model.train()
-    for _ in tqdm(range(p.n_epochs)):
+    for _ in range(p.n_epochs):
 
         # Loop through training data
         epoch_loss = 0.0
@@ -36,8 +35,7 @@ def train(model: CNN, p: Params, optimizer, loss_fn, train_loader, val_loader):
         p.stopping_criteria(model, validation_metrics[p.optim_metric])
 
     # Load in the best model w.r.t validation metric
-    print("Training finished")
-    print(f"Best validation {p.optim_metric} = {p.stopping_criteria.best_score:.4f}")
+    print(f"Training finished, best validation {p.optim_metric} = {p.stopping_criteria.best_score:.4f}")
     p.stopping_criteria.load_best_model(model)
     p.stopping_criteria.reset()
 

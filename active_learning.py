@@ -14,6 +14,7 @@ from params import Params
 from training import train, test
 from data import ActiveLearningDataset
 
+import matplotlib.pyplot as plt
 
 def active_learn(p: Params, dataset: ActiveLearningDataset, test_loader: DataLoader):
     
@@ -25,7 +26,7 @@ def active_learn(p: Params, dataset: ActiveLearningDataset, test_loader: DataLoa
     train_data, val_data = random_split(dataset, [0.9,0.1])
     train_loader = DataLoader(train_data, batch_size=p.batch_size, shuffle=True)
     val_loader = DataLoader(val_data, batch_size=p.batch_size, shuffle=False)
-    print(f"Number of training images: {len(train_data)}")
+    print(f"Number of labeled training images: {len(dataset)}/{p.data_size}")
 
     # Optimizer and loss function 
     optimizer = torch.optim.Adam(model.parameters(), lr=p.lr)
@@ -42,7 +43,7 @@ def active_learn(p: Params, dataset: ActiveLearningDataset, test_loader: DataLoa
     classes = torch.zeros(len(unlabeled_indices), dtype=torch.uint8)
     model.eval()
     with torch.no_grad():
-        for i, data_idx in enumerate(tqdm(unlabeled_indices)): 
+        for i, data_idx in enumerate(tqdm(unlabeled_indices, desc="Unlabeled prediction")): 
 
             im = dataset.data[data_idx]
             im = im[None,None].to(p.device, dtype=torch.float32) / 255
@@ -54,11 +55,11 @@ def active_learn(p: Params, dataset: ActiveLearningDataset, test_loader: DataLoa
 
     # Extract top k most confident predictions
     if p.confidence_based:
-        top_predictions = torch.argwhere(probability_scores > p.confidence_threshold).flatten()
+        top_predictions_idx = torch.argwhere(probability_scores > p.confidence_threshold).flatten()
     else:
-        top_predictions = torch.topk(probability_scores, k=p.n_new_labels)
-    new_indices = list(unlabeled_indices[top_predictions.indices.numpy()])
-    new_labels = classes[top_predictions.indices]
+        top_predictions_idx = torch.topk(probability_scores, k=p.n_new_labels).indices
+    new_indices = list(unlabeled_indices[top_predictions_idx.numpy()])
+    new_labels = classes[top_predictions_idx]
 
     # Update the labels 
     dataset.update_labels(new_indices, new_labels)
@@ -75,7 +76,7 @@ def active_learn(p: Params, dataset: ActiveLearningDataset, test_loader: DataLoa
 
 if __name__ == "__main__":
 
-    experiment_name = "long_run"
+    experiment_name = "long_run3_confidence"
 
     # Simulation parameters
     p = Params()
@@ -99,9 +100,12 @@ if __name__ == "__main__":
         for k, v in metrics.items(): history[k].append(v)
         history["data_size"].append(len(data.indices))
 
-        # Check if we can't do one more iteration
-        if len(data.get_unlabeled_indices()) < p.n_new_labels:
+        # Check if we ran out of unlabeled data
+        if len(data.get_unlabeled_indices()) == 0:
             break
+        else:
+            if (not p.confidence_based) and (len(data.get_unlabeled_indices()) < p.n_new_labels):
+                p.n_new_labels = len(data.get_unlabeled_indices())
     
     # Store the history object
     with open(f"variables/{experiment_name}_history.dat", "wb") as f:

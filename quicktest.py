@@ -13,13 +13,6 @@ from training import train, test
 from data import ActiveLearningDataset
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, confusion_matrix
 
-A = torch.tensor([0.2,0.55,0.99,0.99,0.1,0.23,0.8])
-
-idx = torch.argwhere(A > 0.79).flatten()
-print(idx)
-print(idx.shape)
-
-exit(0)
 
 A = np.array([0,1,1,2,3,3,4,4,4,4,4]) # target
 B = np.array([0,1,2,2,3,4,1,2,3,3,4]) # prediction

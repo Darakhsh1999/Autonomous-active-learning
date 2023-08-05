@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
 
+from params import Params
+
 class CNN(nn.Module):
 
-    def __init__(self, p):
+    def __init__(self, p: Params):
         super().__init__()
 
         var = p.var
