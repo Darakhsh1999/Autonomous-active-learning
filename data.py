@@ -1,22 +1,48 @@
-from torchvision.datasets import MNIST
-from torchvision import transforms
+import random
+import torch
 import numpy as np
-import matplotlib.pyplot as plt
+from torchvision.datasets import MNIST
+from torch.utils.data import Dataset, Subset
+from torchvision.transforms import ToTensor
 
+from params import Params
 
-def load_data():
-    data = MNIST(root= "Data/", train= True, download= True, transform= transforms.ToTensor())
-    return data
+class ActiveLearningDataset(Dataset):
 
-if __name__ == "__main__":
+    def __init__(self, p: Params):
+        mnist_data = MNIST(root="Data/", train=True, download=True)
+        self.data = mnist_data.data[:p.data_size] # torch-uint8 (D,28,28)
+        self.ground_truth = mnist_data.targets[:p.data_size] # torch-int64 (D,)
+        initial_indices: list = random.sample(range(len(self.data)), p.initial_size)
+        self.indices = initial_indices
+        self.targets = torch.zeros(len(self.data), dtype=torch.uint8) # torch-uint8 (D,)
+        self.targets[initial_indices] = mnist_data.targets[initial_indices].type(torch.uint8) # Write initial ground truth
+    
+    def update_labels(self, new_indices: np.ndarray, new_labels: torch.Tensor):
+        """ Updates the dataset with the new labels """
+        self.indices += new_indices
+        self.targets[new_indices] = new_labels
+    
+    def get_unlabeled_indices(self):
+        all_indices = np.arange(len(self.data))
+        return np.setdiff1d(all_indices, self.indices)
+    
+    def missclassification_rate(self):
+        """ Calculates the current missclassification rate """
 
+        gt = self.ground_truth[self.indices].type(torch.uint8)
+        my_labels = self.targets[self.indices]
 
-    train_data = load_data()
-    n_images = 5
+        print(f"Number of labels: {len(my_labels)}")
 
-    for _ in range(n_images):
+        error_rate = (gt != my_labels).sum()/len(my_labels)
+        print(f"Number of missclassified labels: {error_rate*len(my_labels)}")
+        return error_rate.item()
+    
+    def __len__(self):
+        return len(self.indices)
+        
+    def __getitem__(self, idx):
+        idx = self.indices[idx]
+        return self.data[idx], self.targets[idx]
 
-        img, digit = train_data[np.random.randint(0,len(train_data))]
-        plt.imshow(img.squeeze(), cmap= "gray")
-        plt.title(f"Digit {digit}")
-        plt.show()
