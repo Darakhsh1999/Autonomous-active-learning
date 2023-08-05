@@ -53,9 +53,12 @@ def active_learn(p: Params, dataset: ActiveLearningDataset, test_loader: DataLoa
             classes[i] = predicted_class
 
     # Extract top k most confident predictions
-    top_k_predictions = torch.topk(probability_scores, k=p.n_new_labels)
-    new_indices = list(unlabeled_indices[top_k_predictions.indices.numpy()])
-    new_labels = classes[top_k_predictions.indices]
+    if p.confidence_based:
+        top_predictions = torch.argwhere(probability_scores > p.confidence_threshold).flatten()
+    else:
+        top_predictions = torch.topk(probability_scores, k=p.n_new_labels)
+    new_indices = list(unlabeled_indices[top_predictions.indices.numpy()])
+    new_labels = classes[top_predictions.indices]
 
     # Update the labels 
     dataset.update_labels(new_indices, new_labels)
@@ -64,7 +67,7 @@ def active_learn(p: Params, dataset: ActiveLearningDataset, test_loader: DataLoa
     test_metrics = test(model, p, test_loader, is_transformed=True)
 
     # Calculate misclassification rate 
-    test_metrics["error"] = dataset.missclassification_rate()
+    test_metrics["error_rate"], test_metrics["n_errors"] = dataset.missclassification_rate()
 
     return test_metrics
 
@@ -99,7 +102,7 @@ if __name__ == "__main__":
         # Check if we can't do one more iteration
         if len(data.get_unlabeled_indices()) < p.n_new_labels:
             break
-
+    
     # Store the history object
     with open(f"variables/{experiment_name}_history.dat", "wb") as f:
         pickle.dump(history, f)

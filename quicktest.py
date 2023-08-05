@@ -13,20 +13,11 @@ from training import train, test
 from data import ActiveLearningDataset
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, confusion_matrix
 
-history = defaultdict(list)
+A = torch.tensor([0.2,0.55,0.99,0.99,0.1,0.23,0.8])
 
-d = {
-    "yo": 1,
-    "mo": 2,
-    "zo": 4,
-    "do": 22,
-}
-
-for k,v in d.items():
-    print(k, type(k))
-    print(v, type(v))
-    history[k].append(v)
-
+idx = torch.argwhere(A > 0.79).flatten()
+print(idx)
+print(idx.shape)
 
 exit(0)
 

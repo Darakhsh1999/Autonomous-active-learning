@@ -33,16 +33,14 @@ class ActiveLearningDataset(Dataset):
         gt = self.ground_truth[self.indices].type(torch.uint8)
         my_labels = self.targets[self.indices]
 
-        print(f"Number of labels: {len(my_labels)}")
-
-        error_rate = (gt != my_labels).sum()/len(my_labels)
-        print(f"Number of missclassified labels: {error_rate*len(my_labels)}")
-        return error_rate.item()
+        n_error = (gt != my_labels).sum()
+        error_rate = n_error/len(my_labels)
+        return error_rate.item(), n_error.item()
     
     def __len__(self):
         return len(self.indices)
         
     def __getitem__(self, idx):
         idx = self.indices[idx]
-        return self.data[idx], self.targets[idx]
+        return self.data[idx], self.targets[idx] # (28,28), (,)
 

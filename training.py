@@ -1,8 +1,8 @@
 import torch
 import numpy as np
+from tqdm import tqdm
 from torch.utils.data import DataLoader
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
-
 
 from model import CNN
 from params import Params
@@ -10,7 +10,7 @@ from params import Params
 def train(model: CNN, p: Params, optimizer, loss_fn, train_loader, val_loader):
 
     model.train()
-    for _ in range(p.n_epochs):
+    for _ in tqdm(range(p.n_epochs)):
 
         # Loop through training data
         epoch_loss = 0.0

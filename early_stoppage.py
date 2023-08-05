@@ -35,7 +35,6 @@ class EarlyStopping():
             self.best_model.load_state_dict(model.state_dict()) # Store new best model
         else: # Decrease
             self.counter += 1
-
             if (self.patience is not None) and (self.counter >= self.patience):
                 if self.restore_best_weights:
                     model.load_state_dict(self.best_model.state_dict())
