@@ -15,7 +15,6 @@ test_data = MNIST(root="Data/", train=False, download=True, transform=transforms
 
 # CNN model
 p = Params()
-p.n_epochs = 15
 model = CNN(p)
 model = model.to(p.device)
 

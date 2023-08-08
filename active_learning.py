@@ -83,10 +83,12 @@ def active_learn(p: Params, dataset: ActiveLearningDataset, test_loader: DataLoa
 
 if __name__ == "__main__":
 
-    experiment_name = "long_run3_confidence"
-
     # Simulation parameters
     p = Params()
+
+    experiment_name = "run1"
+    experiment_name += f"{f'_{p.initial_size}'}{f'_{p.n_new_labels}' if p.use_model_prediction else ''}"
+    print("Starting script with experiment name:", experiment_name)
 
     # Load in data
     data = ActiveLearningDataset(p) # continually growing data set
