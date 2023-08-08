@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 def active_learn(p: Params, dataset: ActiveLearningDataset, test_loader: DataLoader):
     
-    # CNN model
+    # Fresh CNN model
     model = CNN(p)
     model = model.to(p.device)
     
@@ -53,13 +53,20 @@ def active_learn(p: Params, dataset: ActiveLearningDataset, test_loader: DataLoa
             probability_scores[i] = probabilities[predicted_class]
             classes[i] = predicted_class
 
-    # Extract top k most confident predictions
-    if p.confidence_based:
-        top_predictions_idx = torch.argwhere(probability_scores > p.confidence_threshold).flatten()
-    else:
-        top_predictions_idx = torch.topk(probability_scores, k=p.n_new_labels).indices
-    new_indices = list(unlabeled_indices[top_predictions_idx.numpy()])
-    new_labels = classes[top_predictions_idx]
+    if p.use_model_prediction: # Extract top k most confident predictions
+        if p.confidence_based:
+            top_predictions_idx = torch.argwhere(probability_scores > p.confidence_threshold).flatten()
+        else:
+            top_predictions_idx = torch.topk(probability_scores, k=p.n_new_labels).indices
+    else: # Extract k least confident predictions
+        if p.confidence_based:
+            bot_predictions_idx = torch.argwhere(probability_scores < p.confidence_threshold).flatten()
+        else:
+            bot_predictions_idx = torch.topk(probability_scores, k=p.n_new_labels, largest=False).indices
+
+    new_label_indices = top_predictions_idx if p.use_model_prediction else bot_predictions_idx # 0,...,n_unlabeled
+    new_indices = list(unlabeled_indices[new_label_indices.numpy()]) # {0,...,data_size}
+    new_labels = classes[new_label_indices] if p.use_model_prediction else dataset.ground_truth[new_indices]
 
     # Update the labels 
     dataset.update_labels(new_indices, new_labels)
@@ -70,7 +77,7 @@ def active_learn(p: Params, dataset: ActiveLearningDataset, test_loader: DataLoa
     # Calculate misclassification rate 
     test_metrics["error_rate"], test_metrics["n_errors"] = dataset.missclassification_rate()
 
-    return test_metrics
+    return model, test_metrics
 
 
 
@@ -91,7 +98,7 @@ if __name__ == "__main__":
     for i in range(p.n_iterations):
 
         # Train the model on a restricted initial data set
-        metrics = active_learn(p, data, test_loader)
+        model, metrics = active_learn(p, data, test_loader)
 
         print(f"Iteration {1+i}")
         pprint(metrics)
@@ -107,8 +114,31 @@ if __name__ == "__main__":
             if (not p.confidence_based) and (len(data.get_unlabeled_indices()) < p.n_new_labels):
                 p.n_new_labels = len(data.get_unlabeled_indices())
     
+    # Detect missclassified labels
+    if p.use_model_prediction:
+
+        # Get index of missclassified data
+        gt = data.ground_truth[data.indices]
+        my_labels = data.targets[data.indices]
+        missclassified_idx = torch.argwhere(gt != my_labels).flatten()
+
+        # Predict on missclassified data
+        new_predictions = torch.zeros(len(missclassified_idx), dtype=torch.uint8)
+        with torch.no_grad():
+            for i, miss_idx in enumerate(missclassified_idx):
+
+                im = data.data[miss_idx]
+                im = im[None,None].to(p.device, dtype=torch.float32) / 255
+                probabilities = model(im).squeeze() # (10,)
+                new_predictions[i] = torch.argmax(probabilities) # class 0-9
+
+        # check if it the same as ground truth
+        detection_rate = (new_predictions == gt[missclassified_idx]).sum() / len(missclassified_idx)
+        print(f"From {len(missclassified_idx)} misslabeled data points, detected {detection_rate*100:.2f} %")
+    
     # Store the history object
-    with open(f"variables/{experiment_name}_history.dat", "wb") as f:
+    save_name = f"{experiment_name}{'_modelpred' if p.use_model_prediction else ''}{'_confidence' if p.confidence_based else ''}"
+    with open(f"variables/{save_name}_history.dat", "wb") as f:
         pickle.dump(history, f)
 
     

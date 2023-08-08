@@ -12,7 +12,7 @@ class ActiveLearningDataset(Dataset):
     def __init__(self, p: Params):
         mnist_data = MNIST(root="Data/", train=True, download=True)
         self.data = mnist_data.data[:p.data_size] # torch-uint8 (D,28,28)
-        self.ground_truth = mnist_data.targets[:p.data_size] # torch-int64 (D,)
+        self.ground_truth = mnist_data.targets[:p.data_size].type(torch.uint8) # torch-uint8 (D,)
         initial_indices: list = random.sample(range(len(self.data)), p.initial_size)
         self.indices = initial_indices
         self.targets = torch.zeros(len(self.data), dtype=torch.uint8) # torch-uint8 (D,)
@@ -31,7 +31,7 @@ class ActiveLearningDataset(Dataset):
     def missclassification_rate(self):
         """ Calculates the current missclassification rate """
 
-        gt = self.ground_truth[self.indices].type(torch.uint8)
+        gt = self.ground_truth[self.indices]
         my_labels = self.targets[self.indices]
 
         n_error = (gt != my_labels).sum()
