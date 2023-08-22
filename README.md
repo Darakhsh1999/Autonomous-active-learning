@@ -6,9 +6,10 @@ Active learning comparison on MNIST data by appending labels to a continuously g
 ---
 **Analysis**
 
-Three separate runs with 40 iterations was simulated for both methods and the $F_1$ score on a held-out test set was used to benchmark the different methods. 
+Five separate runs with 40 iterations was simulated for both methods and the $F_1$ score on a held-out test set was used to benchmark the different methods. As expected the classical method achieves a higher increase in performance over the run of the simulation. This is because adding labels to data points in which the model has low prediction confidence on, should yield more  information to the data set. However, we still see an increase in performance for the greedy method that is completelty autonomous in its labeling process. 
 
 ![image1](https://i.imgur.com/nI4tsKE.png)
 
+As mentioned, the greedy method will introduce missclassified data to the data set. The error rate as a function of data size is shown in the figure below. It's worth noting that the parameters $n_initial$ and $n$ directly affect the error_rate progression. For large $n_initial$ the initial model will have a high generalization performance which lowers the probability of introducing missclassified labels. For the used parameters the error rate is growing proportional to $E \sim \sqrt{x}$ and it looks to plateau near the end of the simulation. This is most likely due to the fact that towards the end, the performance of the ML model is high enough so the rate at which new data is appended to the data set is faster than the introduction of missclassified labels. 
 
 ![image2](https://i.imgur.com/VGNOcg8.png)
