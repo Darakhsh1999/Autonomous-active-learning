@@ -86,7 +86,7 @@ if __name__ == "__main__":
     # Simulation parameters
     p = Params()
 
-    experiment_name = "run1"
+    experiment_name = "run5"
     experiment_name += f"{f'_{p.initial_size}'}{f'_{p.n_new_labels}' if p.use_model_prediction else ''}"
     print("Starting script with experiment name:", experiment_name)
 
