@@ -8,4 +8,7 @@ Active learning comparison on MNIST data by appending labels to a continuously g
 
 Three separate runs with 40 iterations was simulated for both methods and the $F_1$ score on a held-out test set was used to benchmark the different methods. 
 
-![image1](https://i.imgur.com/imquG0K.png)
+![image1](https://i.imgur.com/nI4tsKE.png)
+
+
+![image2](https://i.imgur.com/VGNOcg8.png)
